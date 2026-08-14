@@ -18,9 +18,10 @@ dependencies {
 }
 
 tasks.processResources {
-    inputs.property("version", project.version)
+    val modVersion = project.version.toString()
+    inputs.property("version", modVersion)
     filesMatching("META-INF/neoforge.mods.toml") {
-        expand("version" to project.version)
+        expand("version" to modVersion)
     }
     from(project(":common").sourceSets.main.get().resources)
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE

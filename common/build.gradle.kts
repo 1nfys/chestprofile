@@ -22,8 +22,9 @@ loom {
 }
 
 tasks.processResources {
-    inputs.property("version", project.version)
+    val modVersion = project.version.toString()
+    inputs.property("version", modVersion)
     filesMatching("chestprofiles.mixins.json") {
-        expand("version" to project.version)
+        expand("version" to modVersion)
     }
 }
