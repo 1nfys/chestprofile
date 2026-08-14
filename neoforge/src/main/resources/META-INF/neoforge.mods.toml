@@ -1,0 +1,28 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+
+[[mods]]
+modId="chestprofile"
+version="${version}"
+displayName="Chest Profile"
+description="Storage layouts with phantom-item rendering and quick transfers for containers."
+logoFile="icon.png"
+authors="_1nfys"
+
+[[dependencies."chestprofile"]]
+modId="neoforge"
+type="required"
+versionRange="[1,)"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies."chestprofile"]]
+modId="minecraft"
+type="required"
+versionRange="[26.2,)"
+ordering="NONE"
+side="CLIENT"
+
+[[mixins]]
+config="chestprofile.mixins.json"

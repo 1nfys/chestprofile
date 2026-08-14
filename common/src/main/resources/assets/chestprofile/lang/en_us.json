@@ -1,0 +1,48 @@
+{
+  "key.category.chestprofile.main": "Chest Profile",
+  "key.chestprofile.transfer": "Transfer active profile to container",
+  "key.chestprofile.togglePanel": "Toggle panel visibility",
+
+  "chestprofile.screen.settings": "Chest Profile",
+  "chestprofile.screen.name": "Config name",
+  "chestprofile.screen.profileName": "Profile name",
+  "chestprofile.screen.openFile": "Open config file",
+  "chestprofile.screen.saveFile": "Save config file",
+
+  "chestprofile.profile": "Profile %s of %s",
+  "chestprofile.profileNamed": "Profile %s of %s: %s",
+  "chestprofile.profile.none": "No profiles",
+
+  "chestprofile.option.panelEnabled": "Show panel",
+
+  "chestprofile.value.on": "ON",
+  "chestprofile.value.off": "OFF",
+
+  "chestprofile.button.rename": "Rename",
+  "chestprofile.button.renameProfile": "Rename",
+  "chestprofile.button.new": "New",
+  "chestprofile.button.delete": "Delete",
+  "chestprofile.button.clear": "Clear",
+  "chestprofile.button.import": "Import",
+  "chestprofile.button.export": "Export",
+  "chestprofile.button.chooseFile": "Choose File...",
+  "chestprofile.button.saveAs": "Save As...",
+  "chestprofile.button.open": "Open",
+  "chestprofile.button.save": "Save",
+  "chestprofile.button.cancel": "Cancel",
+  "chestprofile.button.layout": "Layout builder",
+  "chestprofile.button.done": "Done",
+
+  "chestprofile.status.renamed": "Renamed to %s",
+  "chestprofile.status.profileRenamed": "Profile %s renamed",
+  "chestprofile.status.created": "Created config %s",
+  "chestprofile.status.tooMany": "Maximum of 50 configs reached",
+  "chestprofile.status.deleted": "Config deleted",
+  "chestprofile.status.cleared": "Config cleared",
+  "chestprofile.status.imported": "Imported config %s from clipboard",
+  "chestprofile.status.importFailed": "Clipboard does not contain a valid config",
+  "chestprofile.status.exported": "Exported config %s to clipboard",
+  "chestprofile.status.importedFile": "Imported config %s",
+  "chestprofile.status.exportedFile": "Exported %s to file",
+  "chestprofile.status.fileFailed": "File operation failed"
+}

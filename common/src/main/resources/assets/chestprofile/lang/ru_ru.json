@@ -1,0 +1,48 @@
+{
+  "key.category.chestprofile.main": "Chest Profile",
+  "key.chestprofile.transfer": "Перенести активный профиль в сундук",
+  "key.chestprofile.togglePanel": "Переключить отображение панели",
+
+  "chestprofile.screen.settings": "Chest Profile",
+  "chestprofile.screen.name": "Имя конфига",
+  "chestprofile.screen.profileName": "Имя профиля",
+  "chestprofile.screen.openFile": "Открыть файл конфига",
+  "chestprofile.screen.saveFile": "Сохранить файл конфига",
+
+  "chestprofile.profile": "Профиль %s из %s",
+  "chestprofile.profileNamed": "Профиль %s из %s: %s",
+  "chestprofile.profile.none": "Нет профилей",
+
+  "chestprofile.option.panelEnabled": "Показывать панель",
+
+  "chestprofile.value.on": "ВКЛ",
+  "chestprofile.value.off": "ВЫКЛ",
+
+  "chestprofile.button.rename": "Переименовать",
+  "chestprofile.button.renameProfile": "Переименовать",
+  "chestprofile.button.new": "Новый",
+  "chestprofile.button.delete": "Удалить",
+  "chestprofile.button.clear": "Очистить",
+  "chestprofile.button.import": "Импорт",
+  "chestprofile.button.export": "Экспорт",
+  "chestprofile.button.chooseFile": "Выбрать файл...",
+  "chestprofile.button.saveAs": "Сохранить как...",
+  "chestprofile.button.open": "Открыть",
+  "chestprofile.button.save": "Сохранить",
+  "chestprofile.button.cancel": "Отмена",
+  "chestprofile.button.layout": "Конструктор раскладки",
+  "chestprofile.button.done": "Готово",
+
+  "chestprofile.status.renamed": "Переименовано в %s",
+  "chestprofile.status.profileRenamed": "Профиль %s переименован",
+  "chestprofile.status.created": "Создан конфиг %s",
+  "chestprofile.status.tooMany": "Достигнут лимит в 50 конфигов",
+  "chestprofile.status.deleted": "Конфиг удален",
+  "chestprofile.status.cleared": "Конфиг очищен",
+  "chestprofile.status.imported": "Конфиг %s импортирован из буфера",
+  "chestprofile.status.importFailed": "Буфер обмена не содержит валидный конфиг",
+  "chestprofile.status.exported": "Конфиг %s скопирован в буфер",
+  "chestprofile.status.importedFile": "Импортирован конфиг %s",
+  "chestprofile.status.exportedFile": "Экспортировано в файл %s",
+  "chestprofile.status.fileFailed": "Ошибка работы с файлом"
+}
