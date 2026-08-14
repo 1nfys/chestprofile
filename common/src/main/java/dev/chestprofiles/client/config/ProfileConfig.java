@@ -565,9 +565,9 @@ public class ProfileConfig {
     }
 
     public static class ChestRef {
-        @SerializedName(value = "config", alternate = {"profile"})
+        @SerializedName(value = "config", alternate = {"configIndex"})
         public int config;
-        @SerializedName(value = "profile", alternate = {"cell"})
+        @SerializedName(value = "profile", alternate = {"cell", "profileIndex"})
         public int profile;
 
         public ChestRef() {

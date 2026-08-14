@@ -9,14 +9,14 @@
 [![Available for NeoForge](https://img.shields.io/badge/Available_for-NeoForge_26.2-e05d44?style=flat)](https://neoforged.net/)
 
 [![Available on Modrinth](https://img.shields.io/badge/Available_on-Modrinth-00AF5C?style=flat&logo=modrinth&logoColor=white)](https://modrinth.com/mod/chest-profile)
-[![Available on CurseForge](https://img.shields.io/badge/Available_on-CurseForge-f16436?style=flat&logo=curseforge&logoColor=white)](https://curseforge.com/minecraft/mc-mods/chestprofile)
+[![Available on CurseForge](https://img.shields.io/badge/Available_on-CurseForge-f16436?style=flat&logo=curseforge&logoColor=white)](https://curseforge.com/minecraft/mc-mods/chest-profile/)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/1nfys/chestprofile)
 
 
 </div>
 
 мод на майнкрафт, который раскладывает вещи по сундукам по готовым раскладкам. настрой профиль с предметами, и он сам перенесет нужное количество из инвентаря. призрачные иконки показывают, что куда должно лечь.
-
+#### +мой конфиг для мода со всеми блоками из выживания
 ## что умеет
 
 - конфиги с профилями. до 50 конфигов, до 128 профилей в каждом
@@ -73,17 +73,19 @@
 
 [TerminalMC](https://github.com/TerminalMC/ClientSort) - взял у него некоторые наработки переноса предметов + совместим с ним
 
+[Cubicmetre](https://mis-builder.cubicmetre.net/) - конфиг делается через его сайт
+
 ---
 
 # Chest Profile
 
 a minecraft mod that organizes items in chests using preset layouts. set up a profile with items, and it will automatically transfer the required amounts from your inventory. ghost icons show where each item belongs.
-
+#### +my config for mod with all survival items
 ## what it does
 
 - configs with profiles. up to 50 configs, up to 128 profiles each
 - each profile holds a set of items with counts. essentially a chest layout
-- ghost items. even in an empty chest, you can see where and what should go
+- phantom items. even in an empty chest, you can see where and what should go
 - auto-fill. transfers exactly as much from your inventory as the layout requires
 - per-chest binding. each chest remembers its own active profile and config
 - panel next to the chest. browse configs, select profiles, hover to see contents
@@ -134,5 +136,7 @@ config is located at `config/chestprofile.json`, config files in `config/chestpr
 ## credits
 
 [TerminalMC](https://github.com/TerminalMC/ClientSort) - inspired some item transfer concepts + ui compatibility
+
+[Cubicmetre](https://mis-builder.cubicmetre.net/) - for config site creation
 
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
