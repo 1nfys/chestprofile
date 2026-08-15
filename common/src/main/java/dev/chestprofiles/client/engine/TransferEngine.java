@@ -201,15 +201,18 @@ public final class TransferEngine {
             if (target != null) {
                 click(menu, target);
             } else {
-                returnCarried(menu);
+                returnCarried(menu, player);
+                activeEngine = null;
             }
-            sourceSlotIndex = null;
+            if (menu.getCarried().isEmpty()) {
+                sourceSlotIndex = null;
+            }
             return;
         }
 
         Slot target = findLayoutSlot(menu, player, carried);
         if (target == null) {
-            returnCarried(menu);
+            returnCarried(menu, player);
             sourceSlotIndex = null;
             activeEngine = null;
             return;
@@ -231,9 +234,13 @@ public final class TransferEngine {
     }
 
     private static boolean canMerge(Slot slot, ItemStack carried) {
+        if (!slot.hasItem() || !slot.mayPlace(carried)) {
+            return false;
+        }
         ItemStack current = slot.getItem();
-        return current.getItem() == carried.getItem()
-                && current.getCount() + carried.getCount() <= current.getMaxStackSize();
+        return ItemStack.isSameItemSameComponents(current, carried)
+                && current.getCount() < current.getMaxStackSize()
+                && current.getCount() < slot.getMaxStackSize();
     }
 
     private Slot findLayoutSlot(AbstractContainerMenu menu, LocalPlayer player, ItemStack carried) {
@@ -243,7 +250,7 @@ public final class TransferEngine {
         }
         Inventory inventory = player.getInventory();
         List<Slot> chestSlots = chestSlots(menu, inventory);
-        int[] stacksPerEntry = ProfileConfig.stacksPerEntry(profile, inventory, chestSlots);
+        int[] stacksPerEntry = ProfileConfig.stacksPerEntry(profile, inventory, chestSlots, carried);
         List<ProfileConfig.ItemEntry> layout = ProfileConfig.scaledLayout(profile, stacksPerEntry, chestSlots.size());
 
         int regionEnd = -1;
@@ -253,13 +260,26 @@ public final class TransferEngine {
             if (item == null || item != carried.getItem()) {
                 continue;
             }
-            regionEnd = slotIndex + 1;
-            Slot slot = chestSlots.get(slotIndex);
-            if (!slot.mayPlace(carried)) {
+            regionEnd = Math.max(regionEnd, slotIndex + 1);
+            if (slotIndex < chestSlots.size()) {
+                Slot slot = chestSlots.get(slotIndex);
+                if (canMerge(slot, carried)) {
+                    return slot;
+                }
+            }
+        }
+
+        for (int slotIndex = 0; slotIndex < layout.size(); slotIndex++) {
+            ProfileConfig.ItemEntry entry = layout.get(slotIndex);
+            Item item = ProfileConfig.itemFromId(entry.item);
+            if (item == null || item != carried.getItem()) {
                 continue;
             }
-            if (slot.getItem().isEmpty() || canMerge(slot, carried)) {
-                return slot;
+            if (slotIndex < chestSlots.size()) {
+                Slot slot = chestSlots.get(slotIndex);
+                if (slot.mayPlace(carried) && slot.getItem().isEmpty()) {
+                    return slot;
+                }
             }
         }
 
@@ -271,7 +291,13 @@ public final class TransferEngine {
 
         int startIndex = Math.max(0, regionEnd);
         for (Slot slot : chestSlots) {
-            if (slot.getContainerSlot() >= startIndex && slot.getItem().isEmpty()) {
+            if (slot.getContainerSlot() >= startIndex && slot.getItem().isEmpty() && slot.mayPlace(carried)) {
+                return slot;
+            }
+        }
+
+        for (Slot slot : chestSlots) {
+            if (slot.getItem().isEmpty() && slot.mayPlace(carried)) {
                 return slot;
             }
         }
@@ -295,8 +321,9 @@ public final class TransferEngine {
     private Slot findPlayerPlacementSlot(AbstractContainerMenu menu, LocalPlayer player, ItemStack carried) {
         for (Slot slot : menu.slots) {
             if (slot.container != player.getInventory() || !slot.isActive() || !slot.hasItem()
-                    || slot.getItem().getItem() != carried.getItem()
+                    || !ItemStack.isSameItemSameComponents(slot.getItem(), carried)
                     || slot.getItem().getCount() >= slot.getItem().getMaxStackSize()
+                    || slot.getItem().getCount() >= slot.getMaxStackSize()
                     || !slot.mayPlace(carried)) {
                 continue;
             }
@@ -311,14 +338,22 @@ public final class TransferEngine {
         return null;
     }
 
-    private void returnCarried(AbstractContainerMenu menu) {
-        if (sourceSlotIndex == null) {
-            return;
+    private void returnCarried(AbstractContainerMenu menu, LocalPlayer player) {
+        if (sourceSlotIndex != null) {
+            for (Slot slot : menu.slots) {
+                if (slot.index == sourceSlotIndex && slot.isActive()) {
+                    click(menu, slot);
+                    if (menu.getCarried().isEmpty()) {
+                        return;
+                    }
+                    break;
+                }
+            }
         }
-        for (Slot slot : menu.slots) {
-            if (slot.index == sourceSlotIndex && slot.isActive()) {
-                click(menu, slot);
-                return;
+        if (!menu.getCarried().isEmpty() && player != null) {
+            Slot fallback = findPlayerPlacementSlot(menu, player, menu.getCarried());
+            if (fallback != null) {
+                click(menu, fallback);
             }
         }
     }

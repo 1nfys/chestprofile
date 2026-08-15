@@ -14,6 +14,6 @@ public final class ChestProfiles {
 
     public static void init() {
         ProfileConfig.load();
-        LOG.info("[ChestProfile] initialized (version 1.0, Minecraft 26.2)");
+        LOG.info("[ChestProfile] initialized (version 1.1, Minecraft 26.2)");
     }
 }

@@ -538,7 +538,8 @@ public final class ProfilePanel {
                 chestSlots.add(slot);
             }
         }
-        int[] stacksPerEntry = ProfileConfig.stacksPerEntry(profile, inventory, chestSlots);
+        ItemStack carried = screen.getMenu() != null ? screen.getMenu().getCarried() : ItemStack.EMPTY;
+        int[] stacksPerEntry = ProfileConfig.stacksPerEntry(profile, inventory, chestSlots, carried);
         return ProfileConfig.scaledLayout(profile, stacksPerEntry, chestSlots.size());
     }
 

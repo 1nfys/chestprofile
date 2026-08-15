@@ -264,11 +264,18 @@ public class ProfileConfig {
     }
 
     public static int[] stacksPerEntry(Profile profile, Inventory playerInventory, List<Slot> chestSlots) {
+        return stacksPerEntry(profile, playerInventory, chestSlots, ItemStack.EMPTY);
+    }
+
+    public static int[] stacksPerEntry(Profile profile, Inventory playerInventory, List<Slot> chestSlots, ItemStack carried) {
         Map<Item, Integer> playerCounts = new HashMap<>();
         for (ItemStack stack : playerInventory.getNonEquipmentItems()) {
             if (!stack.isEmpty()) {
                 playerCounts.merge(stack.getItem(), 1, Integer::sum);
             }
+        }
+        if (carried != null && !carried.isEmpty()) {
+            playerCounts.merge(carried.getItem(), 1, Integer::sum);
         }
         Map<Item, Integer> chestCounts = new HashMap<>();
         for (Slot slot : chestSlots) {
