@@ -16,7 +16,7 @@
 </div>
 
 мод на майнкрафт, который раскладывает вещи по сундукам по готовым раскладкам. настрой профиль с предметами, и он сам перенесет нужное количество из инвентаря. призрачные иконки показывают, что куда должно лечь.
-#### +мой конфиг для мода со всеми блоками из выживания
+#### [+мой конфиг](all_surv.json) для мода со всеми блоками из выживания
 ## что умеет
 
 - конфиги с профилями. до 50 конфигов, до 128 профилей в каждом
@@ -80,7 +80,7 @@
 # Chest Profile
 
 a minecraft mod that organizes items in chests using preset layouts. set up a profile with items, and it will automatically transfer the required amounts from your inventory. ghost icons show where each item belongs.
-#### +my config for mod with all survival items
+#### +[my config](all_surv.json) for mod with all survival items
 ## what it does
 
 - configs with profiles. up to 50 configs, up to 128 profiles each
