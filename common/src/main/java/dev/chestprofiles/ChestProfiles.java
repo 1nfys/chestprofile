@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 public final class ChestProfiles {
     public static final String MOD_ID = "chestprofile";
     public static final String MOD_NAME = "Chest Profile";
+    public static final String MOD_VERSION = "1.1a";
     private static final Logger LOG = LogUtils.getLogger();
 
     private ChestProfiles() {
@@ -14,6 +15,6 @@ public final class ChestProfiles {
 
     public static void init() {
         ProfileConfig.load();
-        LOG.info("[ChestProfile] initialized (version 1.1, Minecraft 26.2)");
+        LOG.info("[ChestProfile] initialized (version {}, Minecraft 26.2)", MOD_VERSION);
     }
 }

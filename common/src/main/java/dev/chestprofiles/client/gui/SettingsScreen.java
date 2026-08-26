@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -93,12 +94,16 @@ public class SettingsScreen extends Screen {
             refreshProfilePicker();
             setStatus(Component.translatable("chestprofile.status.deleted"), false);
         }).bounds(panelLeft + BUTTON_WIDTH_TRIPLE + BUTTON_GAP, rowY, BUTTON_WIDTH_TRIPLE, BUTTON_HEIGHT).build());
-        addRenderableWidget(Button.builder(Component.translatable("chestprofile.button.clear"), button -> {
-            profileConfig.clearConfig(profileConfig.getActiveConfig());
-            ProfileConfig.save();
-            refreshProfilePicker();
-            setStatus(Component.translatable("chestprofile.status.cleared"), false);
-        }).bounds(panelLeft + (BUTTON_WIDTH_TRIPLE + BUTTON_GAP) * 2, rowY, BUTTON_WIDTH_TRIPLE, BUTTON_HEIGHT).build());
+        addRenderableWidget(Button.builder(Component.translatable("chestprofile.button.migrate"), button -> {
+            int migrated = profileConfig.migrateDefaultChestsToCurrentScope();
+            if (migrated > 0) {
+                setStatus(Component.translatable("chestprofile.status.migrated", migrated), false);
+            } else {
+                setStatus(Component.translatable("chestprofile.status.noMigrationData"), false);
+            }
+        })
+        .tooltip(Tooltip.create(Component.translatable("chestprofile.tooltip.migrate")))
+        .bounds(panelLeft + (BUTTON_WIDTH_TRIPLE + BUTTON_GAP) * 2, rowY, BUTTON_WIDTH_TRIPLE, BUTTON_HEIGHT).build());
         rowY += ROW_STEP_Y;
 
         addRenderableWidget(Button.builder(Component.translatable("chestprofile.button.import"), button -> {

@@ -1,4 +1,4 @@
-<div align="center">
+<div style="text-align: center;">
 
 # Chest Profile
 
@@ -26,7 +26,7 @@
 - привязка к сундуку. у каждого сундука запоминается свой активный профиль и конфиг
 - панель рядом с сундуком. листай конфиги, выбирай профиль, наведи и посмотри состав
 - настройки. создание, удаление, переименование конфигов и профилей, скрытие панели
-- импорт и экспорт через буфер обмена или файл json, свой файловый диалог
+- импорт и экспорт через буфер обмена или json файл, свой файловый диалог
 - конструктор раскладок открывается прямо из меню
 - хоткеи на перенос и на скрытие панели
 - интерфейс на русском и английском
@@ -37,14 +37,14 @@
 | | |
 | :---: | :---: |
 | <img src="assets/images/panel_01.gif" width="100%" alt="Панель и призраки"/> | <img src="assets/images/fill_01.gif" width="100%" alt="Автозаполнение"/> |
-| **панель и призраки.** открой сундук и слева появится панель с конфигами и профилями. листай конфиги стрелками или скроллом, выбирай профиль. | **автозаполнение.** выбери профиль и нажми кнопку заполнения — предметы из инвентаря переносятся по раскладке. |
+| **панель и призраки.** открой сундук и слева появится панель с конфигами и профилями. листай конфиги стрелками или скроллом, выбирай профиль | **автозаполнение.** выбери профиль и нажми кнопку заполнения предметы из инвентаря переносятся по раскладке |
 | <img src="assets/images/perchest_01.gif" width="100%" alt="Привязка к сундукам"/> | <img src="assets/images/settings_01.gif" width="100%" alt="Настройки"/> |
-| **привязка к сундукам.** у каждого сундука своя память. в разных сундуках разные профили, по дефолту никакого. | **настройки.** шестеренка на панели открывает меню. создание, удаление, переименование конфигов и профилей, скрытие панели, импорт и экспорт через буфер обмена или файл. |
+| **привязка к сундукам.** у каждого сундука своя память. в разных сундуках разные профили, по дефолту никакого | **настройки.** шестеренка на панели открывает меню. создание, удаление, переименование конфигов и профилей, скрытие панели, импорт и экспорт через буфер обмена или файл |
 
 ## как пользоваться
 
 1. открой сундук. слева появится панель с конфигами и профилями
-2. в настройках (шестеренка на панели) нажми конструктор раскладки — откроется удобный сайт
+2. в настройках (шестеренка на панели) нажми конструктор раскладки - откроется удобный сайт
 3. собери раскладку, добавляя предметы
 4. выбери профиль и нажми кнопку заполнения
 5. мод сам перенесет предметы из инвентаря по профилю
@@ -101,14 +101,14 @@ a minecraft mod that organizes items in chests using preset layouts. set up a pr
 | | |
 | :---: | :---: |
 | <img src="assets/images/panel_01.gif" width="100%" alt="Panel and ghost items"/> | <img src="assets/images/fill_01.gif" width="100%" alt="Auto-fill"/> |
-| **panel and ghost items.** open a chest and a panel appears on the left with configs and profiles. browse configs using the arrows or scroll wheel, and select a profile. | **auto-fill.** select a profile and click the fill button — items from your inventory are transferred according to the layout. |
+| **panel and ghost items.** open a chest and a panel appears on the left with configs and profiles. browse configs using the arrows or scroll wheel, and select a profile | **auto-fill.** select a profile and click the fill button items from your inventory transfer according to the layout |
 | <img src="assets/images/perchest_01.gif" width="100%" alt="Per-chest binding"/> | <img src="assets/images/settings_01.gif" width="100%" alt="Settings"/> |
-| **per-chest binding.** each chest has its own memory. different chests can have different profiles, none selected by default. | **settings.** the gear icon on the panel opens the menu: create, delete, and rename configs and profiles, toggle panel visibility, and import/export via clipboard or file. |
+| **per-chest binding.** each chest has its own memory. different chests can have different profiles, none selected by default. | **settings.** the gear icon on the panel opens the menu: create, delete, and rename configs and profiles, toggle panel visibility, and import/export via clipboard or file |
 
 ## how to use
 
 1. open a chest. the panel with configs and profiles appears on the left
-2. in settings (the gear icon on the panel), click layout builder — a convenient website will open
+2. in settings (the gear icon on the panel), click layout builder - a convenient website will open
 3. build the layout by adding items
 4. select a profile and click the fill button
 5. the mod will automatically transfer items from your inventory according to the profile

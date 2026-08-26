@@ -3,6 +3,7 @@ package dev.chestprofiles.client.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.reflect.TypeToken;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -15,6 +16,7 @@ import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,21 +24,26 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 public class ProfileConfig {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Map<String, Item> ITEM_ID_CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, Map<String, ChestRef>> SCOPE_ASSIGNMENTS_CACHE = new ConcurrentHashMap<>();
 
     public static final int MAX_CONFIGS = 50;
     public static final int MAX_PROFILES = 128;
 
     public static ProfileConfig instance;
 
-    public static final Path CONFIG_FILE = getConfigDir().resolve("chestprofile.json");
-    public static final Path CONFIGS_DIR = getConfigDir().resolve("chestprofile").resolve("configs");
+    public static final Path CONFIG_DIR = getConfigDir().resolve("chestprofile");
+    public static final Path CONFIG_FILE = CONFIG_DIR.resolve("chestprofile.json");
+    public static final Path OLD_CONFIG_FILE = getConfigDir().resolve("chestprofile.json");
+    public static final Path OLD_CONFIGS_DIR = CONFIG_DIR.resolve("configs");
 
     public static Path getConfigDir() {
         try {
@@ -50,16 +57,18 @@ public class ProfileConfig {
 
     public boolean panelEnabled = true;
 
-    @SerializedName(value = "configs", alternate = {"profiles"})
+    @SerializedName(value = "configs", alternate = {"profiles", "layouts"})
     public List<Config> configs = new ArrayList<>();
 
-    @SerializedName(value = "activeConfigIndex", alternate = {"activeProfileIndex"})
+    @SerializedName(value = "activeConfigIndex", alternate = {"activeProfileIndex", "activeConfig"})
     public int activeConfigIndex = 0;
 
+    @SerializedName(value = "chestAssignments", alternate = {"chests", "chestRefs"})
     public Map<String, ChestRef> chestAssignments = new HashMap<>();
 
     public static void load() {
         instance = new ProfileConfig();
+        migrateOldDirectoryStructure();
         if (Files.exists(CONFIG_FILE)) {
             try {
                 String json = Files.readString(CONFIG_FILE, StandardCharsets.UTF_8);
@@ -88,16 +97,240 @@ public class ProfileConfig {
         if (instance.activeConfigIndex < 0 || instance.activeConfigIndex >= instance.configs.size()) {
             instance.activeConfigIndex = 0;
         }
+
+        if (instance.chestAssignments != null && !instance.chestAssignments.isEmpty()) {
+            for (Map.Entry<String, ChestRef> entry : instance.chestAssignments.entrySet()) {
+                String k = entry.getKey();
+                ChestRef ref = entry.getValue();
+                if (k == null || ref == null) {
+                    continue;
+                }
+                String scope = k.contains("@") ? k.substring(0, k.indexOf('@')) : "sp:default";
+                String coordKey = k.contains("@") ? k.substring(k.indexOf('@') + 1) : k;
+                getScopeAssignments(scope).put(coordKey, ref);
+                saveScopeAssignments(scope);
+            }
+            instance.chestAssignments = null;
+        }
+
         save();
+    }
+
+    private static void migrateOldDirectoryStructure() {
+        try {
+            if (!Files.exists(CONFIG_DIR)) {
+                Files.createDirectories(CONFIG_DIR);
+            }
+            if (!Files.exists(CONFIG_FILE) && Files.exists(OLD_CONFIG_FILE)) {
+                Files.move(OLD_CONFIG_FILE, CONFIG_FILE);
+            }
+            if (Files.exists(OLD_CONFIGS_DIR) && Files.isDirectory(OLD_CONFIGS_DIR)) {
+                try (Stream<Path> stream = Files.list(OLD_CONFIGS_DIR)) {
+                    List<Path> files = stream.toList();
+                    for (Path file : files) {
+                        if (Files.isRegularFile(file)) {
+                            Path target = CONFIG_DIR.resolve(file.getFileName());
+                            if (!Files.exists(target)) {
+                                Files.move(file, target);
+                            }
+                        }
+                    }
+                }
+                try {
+                    Files.deleteIfExists(OLD_CONFIGS_DIR);
+                } catch (Exception ignored) {
+                }
+            }
+        } catch (Exception exception) {
+            LOGGER.warn("Failed to migrate legacy config files", exception);
+        }
     }
 
     public static void save() {
         try {
-            Files.createDirectories(CONFIGS_DIR);
+            Files.createDirectories(CONFIG_DIR);
             Files.writeString(CONFIG_FILE, GSON.toJson(instance), StandardCharsets.UTF_8);
         } catch (IOException exception) {
             LOGGER.error("Failed to save chestprofiles config", exception);
         }
+    }
+
+    public static String sanitizeFolderName(String name) {
+        if (name == null || name.isBlank()) {
+            return "default";
+        }
+        String sanitized = name.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
+        if (sanitized.isEmpty()) {
+            return "default";
+        }
+        return sanitized;
+    }
+
+    public static Path getScopeChestsFile(String scope) {
+        String worldScope = scope != null && !scope.isBlank() ? scope : currentWorldScope();
+        if (worldScope.startsWith("sp:")) {
+            String worldName = sanitizeFolderName(worldScope.substring(3));
+            return CONFIG_DIR.resolve("worlds").resolve(worldName).resolve("chests.json");
+        }
+        if (worldScope.startsWith("mp:")) {
+            String serverIp = sanitizeFolderName(worldScope.substring(3));
+            return CONFIG_DIR.resolve("servers").resolve(serverIp).resolve("chests.json");
+        }
+        String fallback = sanitizeFolderName(worldScope);
+        return CONFIG_DIR.resolve("servers").resolve(fallback).resolve("chests.json");
+    }
+
+    public static Map<String, ChestRef> getScopeAssignments(String scope) {
+        String worldScope = scope != null && !scope.isBlank() ? scope : currentWorldScope();
+        return SCOPE_ASSIGNMENTS_CACHE.computeIfAbsent(worldScope, sc -> {
+            Path file = getScopeChestsFile(sc);
+            if (Files.exists(file)) {
+                try {
+                    String json = Files.readString(file, StandardCharsets.UTF_8);
+                    Type type = new TypeToken<Map<String, ChestRef>>() {}.getType();
+                    Map<String, ChestRef> loaded = GSON.fromJson(json, type);
+                    if (loaded != null) {
+                        return new ConcurrentHashMap<>(loaded);
+                    }
+                } catch (Exception exception) {
+                    LOGGER.error("Failed to load chest assignments for {}", sc, exception);
+                }
+            }
+            return new ConcurrentHashMap<>();
+        });
+    }
+
+    public static void saveScopeAssignments(String scope) {
+        String worldScope = scope != null && !scope.isBlank() ? scope : currentWorldScope();
+        Map<String, ChestRef> map = SCOPE_ASSIGNMENTS_CACHE.get(worldScope);
+        if (map == null) {
+            return;
+        }
+        Path file = getScopeChestsFile(worldScope);
+        try {
+            if (file.getParent() != null) {
+                Files.createDirectories(file.getParent());
+            }
+            Files.writeString(file, GSON.toJson(map), StandardCharsets.UTF_8);
+        } catch (IOException exception) {
+            LOGGER.error("Failed to save chest assignments for {}", worldScope, exception);
+        }
+    }
+
+    public int migrateDefaultChestsToCurrentScope() {
+        String currentScope = currentWorldScope();
+        int count = 0;
+        Path[] sources = new Path[] {
+                CONFIG_DIR.resolve("worlds").resolve("default").resolve("chests.json"),
+                CONFIG_DIR.resolve("servers").resolve("default").resolve("chests.json"),
+                CONFIG_DIR.resolve("worlds").resolve("singleplayer").resolve("chests.json")
+        };
+        Map<String, ChestRef> targetAssignments = getScopeAssignments(currentScope);
+        for (Path source : sources) {
+            if (!Files.exists(source)) {
+                continue;
+            }
+            try {
+                String json = Files.readString(source, StandardCharsets.UTF_8);
+                Type type = new TypeToken<Map<String, ChestRef>>() {}.getType();
+                Map<String, ChestRef> loaded = GSON.fromJson(json, type);
+                if (loaded != null && !loaded.isEmpty()) {
+                    for (Map.Entry<String, ChestRef> entry : loaded.entrySet()) {
+                        if (!targetAssignments.containsKey(entry.getKey())) {
+                            targetAssignments.put(entry.getKey(), entry.getValue());
+                            count++;
+                        }
+                    }
+                }
+            } catch (Exception exception) {
+                LOGGER.error("Failed to read source chests during migration from {}", source, exception);
+            }
+        }
+        if (count > 0) {
+            saveScopeAssignments(currentScope);
+        }
+        return count;
+    }
+
+    public static String currentWorldScope() {
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.hasSingleplayerServer() && mc.getSingleplayerServer() != null) {
+                String worldName = mc.getSingleplayerServer().getWorldData().getLevelName();
+                if (worldName != null && !worldName.isBlank()) {
+                    return "sp:" + worldName.trim();
+                }
+                return "sp:singleplayer";
+            }
+            if (mc.getCurrentServer() != null && mc.getCurrentServer().ip != null && !mc.getCurrentServer().ip.isBlank()) {
+                return "mp:" + mc.getCurrentServer().ip.trim().toLowerCase(Locale.ROOT);
+            }
+            if (mc.getConnection() != null) {
+                if (mc.getConnection().getServerData() != null && mc.getConnection().getServerData().ip != null && !mc.getConnection().getServerData().ip.isBlank()) {
+                    return "mp:" + mc.getConnection().getServerData().ip.trim().toLowerCase(Locale.ROOT);
+                }
+                if (mc.getConnection().getConnection() != null && mc.getConnection().getConnection().getRemoteAddress() != null) {
+                    return "mp:" + mc.getConnection().getConnection().getRemoteAddress().toString().trim().toLowerCase(Locale.ROOT);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return "sp:default";
+    }
+
+    public static String chestKey(String dimension, int x, int y, int z) {
+        return chestKey(currentWorldScope(), dimension, x, y, z);
+    }
+
+    public static String chestKey(String scope, String dimension, int x, int y, int z) {
+        String worldScope = scope != null && !scope.isBlank() ? scope : currentWorldScope();
+        return worldScope + "@" + dimension + ":" + x + "," + y + "," + z;
+    }
+
+    public void applyChestAssignment(String key) {
+        if (key == null) {
+            return;
+        }
+        String scope = key.contains("@") ? key.substring(0, key.indexOf('@')) : currentWorldScope();
+        String coordKey = key.contains("@") ? key.substring(key.indexOf('@') + 1) : key;
+        Map<String, ChestRef> assignments = getScopeAssignments(scope);
+        ChestRef assignment = assignments.get(coordKey);
+        if (assignment == null) {
+            Config config = getActiveConfig();
+            if (config != null) {
+                config.activeProfile = -1;
+            }
+            return;
+        }
+        if (assignment.config >= 0 && assignment.config < configs.size()) {
+            activeConfigIndex = assignment.config;
+        }
+        Config config = getActiveConfig();
+        if (config != null) {
+            config.activeProfile = assignment.profile >= 0 && profileOf(config, assignment.profile) != null ? assignment.profile : -1;
+        }
+    }
+
+    public void selectChestProfile(String key, int configIndex, int profileIndex) {
+        if (configIndex >= 0 && configIndex < configs.size()) {
+            activeConfigIndex = configIndex;
+        }
+        Config config = getActiveConfig();
+        if (config != null) {
+            config.activeProfile = profileIndex;
+        }
+        if (key != null) {
+            String scope = key.contains("@") ? key.substring(0, key.indexOf('@')) : currentWorldScope();
+            String coordKey = key.contains("@") ? key.substring(key.indexOf('@') + 1) : key;
+            Map<String, ChestRef> assignments = getScopeAssignments(scope);
+            if (profileIndex >= 0) {
+                assignments.put(coordKey, new ChestRef(activeConfigIndex, profileIndex));
+            } else {
+                assignments.remove(coordKey);
+            }
+            saveScopeAssignments(scope);
+        }
+        save();
     }
 
     public static Item itemFromId(String itemId) {
@@ -263,10 +496,6 @@ public class ProfileConfig {
         return layout;
     }
 
-    public static int[] stacksPerEntry(Profile profile, Inventory playerInventory, List<Slot> chestSlots) {
-        return stacksPerEntry(profile, playerInventory, chestSlots, ItemStack.EMPTY);
-    }
-
     public static int[] stacksPerEntry(Profile profile, Inventory playerInventory, List<Slot> chestSlots, ItemStack carried) {
         Map<Item, Integer> playerCounts = new HashMap<>();
         for (ItemStack stack : playerInventory.getNonEquipmentItems()) {
@@ -312,48 +541,19 @@ public class ProfileConfig {
         return false;
     }
 
-    public static String chestKey(String dimension, int x, int y, int z) {
-        return dimension + ":" + x + "," + y + "," + z;
-    }
-
-    public void applyChestAssignment(String key) {
-        if (key == null) {
-            return;
-        }
-        ChestRef assignment = chestAssignments.get(key);
-        if (assignment == null) {
-            Config config = getActiveConfig();
-            if (config != null) {
-                config.activeProfile = -1;
-            }
-            return;
-        }
-        if (assignment.config >= 0 && assignment.config < configs.size()) {
-            activeConfigIndex = assignment.config;
-        }
-        Config config = getActiveConfig();
-        if (config != null) {
-            config.activeProfile = assignment.profile >= 0 && profileOf(config, assignment.profile) != null ? assignment.profile : -1;
-        }
-    }
-
-    public void selectChestProfile(String key, int configIndex, int profileIndex) {
-        if (configIndex >= 0 && configIndex < configs.size()) {
-            activeConfigIndex = configIndex;
-        }
-        Config config = getActiveConfig();
-        if (config != null) {
-            config.activeProfile = profileIndex;
-        }
-        if (key != null) {
-            chestAssignments.put(key, new ChestRef(activeConfigIndex, profileIndex));
-        }
-        save();
-    }
-
     public Config importFromJson(String json) {
         if (json == null || json.isBlank()) {
             return null;
+        }
+        try {
+            ProfileConfig rootConfig = GSON.fromJson(json, ProfileConfig.class);
+            if (rootConfig != null && rootConfig.configs != null && !rootConfig.configs.isEmpty()) {
+                Config active = rootConfig.getActiveConfig();
+                if (active != null && active.profiles != null && !active.profiles.isEmpty()) {
+                    return finalizeConfig(active);
+                }
+            }
+        } catch (Exception ignored) {
         }
         try {
             LayoutImport layout = GSON.fromJson(json, LayoutImport.class);
@@ -534,10 +734,11 @@ public class ProfileConfig {
     }
 
     public static class Config {
+        @SerializedName(value = "name", alternate = {"title"})
         public String name;
-        @SerializedName(value = "activeProfile", alternate = {"activeCell"})
+        @SerializedName(value = "activeProfile", alternate = {"activeCell", "activeProfileIndex"})
         public int activeProfile = -1;
-        @SerializedName(value = "profiles", alternate = {"cells"})
+        @SerializedName(value = "profiles", alternate = {"cells", "layouts", "categories"})
         public List<Profile> profiles = new ArrayList<>();
 
         public Config() {
@@ -549,7 +750,9 @@ public class ProfileConfig {
     }
 
     public static class Profile {
+        @SerializedName(value = "name", alternate = {"title"})
         public String name;
+        @SerializedName(value = "items", alternate = {"slots", "entries", "cells"})
         public List<ItemEntry> items = new ArrayList<>();
 
         public Profile() {
@@ -557,9 +760,9 @@ public class ProfileConfig {
     }
 
     public static class ItemEntry {
-        @SerializedName("id")
+        @SerializedName(value = "item", alternate = {"id", "name", "itemId"})
         public String item;
-        @SerializedName("count")
+        @SerializedName(value = "count", alternate = {"amount"})
         public int count = 1;
 
         public ItemEntry() {
@@ -587,16 +790,18 @@ public class ProfileConfig {
     }
 
     private static class LayoutImport {
+        @SerializedName(value = "name", alternate = {"title", "configName"})
         public String name;
+        @SerializedName(value = "items", alternate = {"slots", "entries", "cells", "profiles"})
         public List<FlatItem> items;
     }
 
     private static class FlatItem {
-        @SerializedName("id")
+        @SerializedName(value = "item", alternate = {"id", "name", "itemId"})
         public String item;
-        @SerializedName("count")
+        @SerializedName(value = "count", alternate = {"amount"})
         public int count = 1;
-        @SerializedName(value = "profile", alternate = {"cell"})
+        @SerializedName(value = "profile", alternate = {"cell", "profileIndex", "index", "slot"})
         public int profile;
 
         public FlatItem() {

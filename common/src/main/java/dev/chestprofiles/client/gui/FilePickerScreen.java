@@ -58,7 +58,7 @@ public class FilePickerScreen extends Screen {
         this.onOpen = onOpen;
         this.onSave = onSave;
         this.returnTo = returnTo;
-        this.currentDirectory = ProfileConfig.CONFIGS_DIR;
+        this.currentDirectory = ProfileConfig.CONFIG_DIR;
     }
 
     @Override
@@ -98,25 +98,30 @@ public class FilePickerScreen extends Screen {
             drives.add(root.toPath());
         }
         this.errorMessage = null;
-        try (Stream<Path> stream = Files.list(currentDirectory)) {
-            List<Path> directories = new ArrayList<>();
-            List<Path> jsonFiles = new ArrayList<>();
-            stream.forEach(path -> {
-                try {
-                    if (Files.isDirectory(path)) {
-                        directories.add(path);
-                    } else if (path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".json")) {
-                        jsonFiles.add(path);
+        try {
+            if (!Files.exists(currentDirectory)) {
+                Files.createDirectories(currentDirectory);
+            }
+            try (Stream<Path> stream = Files.list(currentDirectory)) {
+                List<Path> directories = new ArrayList<>();
+                List<Path> jsonFiles = new ArrayList<>();
+                stream.forEach(path -> {
+                    try {
+                        if (Files.isDirectory(path)) {
+                            directories.add(path);
+                        } else if (path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".json")) {
+                            jsonFiles.add(path);
+                        }
+                    } catch (Exception ignored) {
                     }
-                } catch (Exception ignored) {
-                }
-            });
-            Comparator<Path> nameComparator = Comparator.comparing(
-                    path -> path.getFileName().toString().toLowerCase(Locale.ROOT));
-            directories.sort(nameComparator);
-            jsonFiles.sort(nameComparator);
-            entries.addAll(directories);
-            entries.addAll(jsonFiles);
+                });
+                Comparator<Path> nameComparator = Comparator.comparing(
+                        path -> path.getFileName().toString().toLowerCase(Locale.ROOT));
+                directories.sort(nameComparator);
+                jsonFiles.sort(nameComparator);
+                entries.addAll(directories);
+                entries.addAll(jsonFiles);
+            }
         } catch (IOException exception) {
             this.errorMessage = exception.toString();
             Path parentDirectory = currentDirectory.getParent();

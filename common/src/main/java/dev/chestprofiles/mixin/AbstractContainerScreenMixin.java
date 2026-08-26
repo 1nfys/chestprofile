@@ -11,10 +11,14 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import org.spongepowered.asm.mixin.Mixin;
@@ -77,6 +81,14 @@ public abstract class AbstractContainerScreenMixin extends Screen {
         BlockPos blockPosition = blockHit.getBlockPos();
         if (!(minecraft.level.getBlockEntity(blockPosition) instanceof MenuProvider)) {
             return null;
+        }
+        BlockState blockState = minecraft.level.getBlockState(blockPosition);
+        if (blockState.getBlock() instanceof ChestBlock && blockState.hasProperty(ChestBlock.TYPE)) {
+            ChestType chestType = blockState.getValue(ChestBlock.TYPE);
+            if (chestType == ChestType.RIGHT) {
+                Direction connected = ChestBlock.getConnectedDirection(blockState);
+                blockPosition = blockPosition.relative(connected);
+            }
         }
         return ProfileConfig.chestKey(
                 minecraft.level.dimension().identifier().toString(),

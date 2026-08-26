@@ -17,9 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class TransferEngine {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -27,22 +25,15 @@ public final class TransferEngine {
     private static final int STEPS_PER_TICK = 5;
     private static final int MAX_STEPS = 6000;
 
-    public enum Mode { FILL_PROFILE, WITHDRAW_PROFILE }
-
     private static TransferEngine activeEngine;
 
     private final AbstractContainerScreen<?> screen;
-    private final Mode mode;
-    private final int profileIndex;
-    private int withdrawSlotIndex;
     private int currentFilterIndex;
     private Integer sourceSlotIndex;
     private int stepCount;
 
-    private TransferEngine(AbstractContainerScreen<?> screen, Mode mode, int profileIndex) {
+    private TransferEngine(AbstractContainerScreen<?> screen) {
         this.screen = screen;
-        this.mode = mode;
-        this.profileIndex = profileIndex;
     }
 
     public static boolean canOperate(AbstractContainerScreen<?> screen) {
@@ -114,19 +105,7 @@ public final class TransferEngine {
         if (profile == null) {
             return false;
         }
-        activeEngine = new TransferEngine(screen, Mode.FILL_PROFILE, config.activeProfile);
-        return true;
-    }
-
-    public static boolean startWithdrawProfile(AbstractContainerScreen<?> screen, int profileIndex) {
-        if (!canOperate(screen) || activeEngine != null) {
-            return false;
-        }
-        ProfileConfig.Profile profile = ProfileConfig.profileOf(ProfileConfig.instance.getActiveConfig(), profileIndex);
-        if (profile == null) {
-            return false;
-        }
-        activeEngine = new TransferEngine(screen, Mode.WITHDRAW_PROFILE, profileIndex);
+        activeEngine = new TransferEngine(screen);
         return true;
     }
 
@@ -147,28 +126,6 @@ public final class TransferEngine {
     }
 
     private void stepPickPhase(LocalPlayer player, AbstractContainerMenu menu) {
-        if (mode == Mode.WITHDRAW_PROFILE) {
-            ProfileConfig.Profile profile = ProfileConfig.profileOf(ProfileConfig.instance.getActiveConfig(), profileIndex);
-            if (profile == null) {
-                activeEngine = null;
-                return;
-            }
-            List<Slot> chestSlots = chestSlots(menu, player.getInventory());
-            int targetSlots = ProfileConfig.profileSlots(profile);
-            for (int i = withdrawSlotIndex; i < targetSlots; i++) {
-                Slot slot = i < chestSlots.size() ? chestSlots.get(i) : null;
-                if (slot == null || slot.getItem().isEmpty() || !slot.mayPickup(player)) {
-                    continue;
-                }
-                click(menu, slot);
-                withdrawSlotIndex = i + 1;
-                sourceSlotIndex = slot.index;
-                return;
-            }
-            activeEngine = null;
-            return;
-        }
-
         ProfileConfig.Config config = ProfileConfig.instance.getActiveConfig();
         ProfileConfig.Profile profile = ProfileConfig.activeProfileOf(config);
         if (profile == null) {
@@ -196,20 +153,6 @@ public final class TransferEngine {
     }
 
     private void stepPlacePhase(LocalPlayer player, AbstractContainerMenu menu, ItemStack carried) {
-        if (mode == Mode.WITHDRAW_PROFILE) {
-            Slot target = findPlayerPlacementSlot(menu, player, carried);
-            if (target != null) {
-                click(menu, target);
-            } else {
-                returnCarried(menu, player);
-                activeEngine = null;
-            }
-            if (menu.getCarried().isEmpty()) {
-                sourceSlotIndex = null;
-            }
-            return;
-        }
-
         Slot target = findLayoutSlot(menu, player, carried);
         if (target == null) {
             returnCarried(menu, player);
@@ -223,7 +166,7 @@ public final class TransferEngine {
         }
     }
 
-    private static List<Slot> chestSlots(AbstractContainerMenu menu, Inventory playerInventory) {
+    public static List<Slot> chestSlots(AbstractContainerMenu menu, Inventory playerInventory) {
         List<Slot> slots = new ArrayList<>();
         for (Slot slot : menu.slots) {
             if (slot.container != playerInventory && slot.isActive()) {

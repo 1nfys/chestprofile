@@ -23,7 +23,6 @@ import java.util.List;
 public final class ProfilePanel {
 
     public static final int MARGIN = 4;
-    public static final int GEAR_W = 14;
     public static final int HEADER_H = 18;
     public static final int SCROLLBAR_W = 2;
     private static final int FILL_W = 13;
@@ -38,8 +37,6 @@ public final class ProfilePanel {
     private static final int TEXTURE_H = 222;
     private static final int CONTENT_INSET_X = 7;
     private static final int ARROW_W = 13;
-    private static final int ARROW_MARGIN = 5;
-    private static final int ARROW_DX = 2;
     private static final int PREV_DY = 3;
     private static final int NEXT_DY = 3;
     private static final int GEAR_DY = 3;
@@ -52,11 +49,11 @@ public final class ProfilePanel {
     private static final int PANEL_OFFSET_X = MARGIN - PANEL_TRIM_LEFT;
     private static final int PANEL_H = TEXTURE_H;
     private static final int GRID_Y1_OFFSET = TEXTURE_H - BOTTOM_BORDER_H;
-    private static final int PREV_X_OFFSET = ARROW_MARGIN + ARROW_DX;
-    private static final int NEXT_X_OFFSET = ARROW_MARGIN + GEAR_W + ARROW_MARGIN + ARROW_W - ARROW_DX;
-    private static final int GEAR_X_OFFSET = ARROW_MARGIN + ARROW_W;
-    private static final int NAME_X0_OFFSET = PREV_X_OFFSET + ARROW_W + 4;
-    private static final int NAME_X1_OFFSET = NEXT_X_OFFSET + 4;
+    private static final int PREV_X_OFFSET = 7;
+    private static final int NEXT_X_OFFSET = 37;
+    private static final int GEAR_X_OFFSET = 20;
+    private static final int NAME_X0_OFFSET = 24;
+    private static final int NAME_X1_OFFSET = 41;
     private static final int ROW_INSET_LEFT = CONTENT_INSET_X + 1;
     private static final int ROW_INSET_RIGHT = CONTENT_INSET_X + SCROLLBAR_W;
 
@@ -361,7 +358,7 @@ public final class ProfilePanel {
         boolean hovered = overHiddenGear(mouseX, mouseY);
         int gearX = panelRight - GEAR_X_OFFSET;
         int gearY = panelY + GEAR_DY;
-        graphics.fill(gearX, gearY, panelRight - ARROW_MARGIN, gearY + ARROW_W, hovered ? BUTTON_HOVER : BUTTON_BG);
+        graphics.fill(gearX, gearY, gearX + ARROW_W, gearY + ARROW_W, hovered ? BUTTON_HOVER : BUTTON_BG);
         renderGear(graphics, gearX, gearY, hovered);
     }
 
@@ -532,13 +529,8 @@ public final class ProfilePanel {
     }
 
     private List<ProfileConfig.ItemEntry> buildAssignment(ProfileConfig.Profile profile, Inventory inventory) {
-        List<Slot> chestSlots = new ArrayList<>();
-        for (Slot slot : screen.getMenu().slots) {
-            if (slot.container != inventory && slot.isActive()) {
-                chestSlots.add(slot);
-            }
-        }
-        ItemStack carried = screen.getMenu() != null ? screen.getMenu().getCarried() : ItemStack.EMPTY;
+        List<Slot> chestSlots = TransferEngine.chestSlots(screen.getMenu(), inventory);
+        ItemStack carried = screen.getMenu().getCarried();
         int[] stacksPerEntry = ProfileConfig.stacksPerEntry(profile, inventory, chestSlots, carried);
         return ProfileConfig.scaledLayout(profile, stacksPerEntry, chestSlots.size());
     }
@@ -627,8 +619,8 @@ public final class ProfilePanel {
         }
 
         String headerText = "Profile " + profileIndex
-                + (profile.name != null && !profile.name.isBlank() ? " \u00a7o" + profile.name : "")
-                + "  \u00a77" + ProfileConfig.profileSlots(profile) + " slots";
+                + (profile.name != null && !profile.name.isBlank() ? " §o" + profile.name : "")
+                + "  §7" + ProfileConfig.profileSlots(profile) + " slots";
 
         int displayedIconCount = Math.min(TOOLTIP_MAX_ICONS, itemStacks.size());
         String moreLabel = itemStacks.size() > displayedIconCount ? "+" + (itemStacks.size() - displayedIconCount) + " more" : null;

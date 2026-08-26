@@ -10,14 +10,14 @@ description="Storage layouts with phantom-item rendering and quick transfers for
 logoFile="icon.png"
 authors="_1nfys"
 
-[[dependencies."chestprofile"]]
+[[dependencies.chestprofile]]
 modId="neoforge"
 type="required"
 versionRange="[1,)"
 ordering="NONE"
 side="CLIENT"
 
-[[dependencies."chestprofile"]]
+[[dependencies.chestprofile]]
 modId="minecraft"
 type="required"
 versionRange="[26.2,)"

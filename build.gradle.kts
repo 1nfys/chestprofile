@@ -6,7 +6,7 @@ plugins {
 val mcVersion = project.property("minecraft_version") as String
 
 subprojects {
-    apply(plugin = "java")
+    plugins.apply("java")
 
     version = project.property("mod_version") as String
     group = project.property("mod_group") as String
@@ -42,6 +42,8 @@ tasks.jar {
 }
 
 val collectJars = tasks.register<Copy>("collectJars") {
+    description = "Collects built jars from subprojects into the root build directory."
+    group = "build"
     into(layout.buildDirectory.dir("libs"))
     from(project(":fabric").layout.buildDirectory.dir("libs")) {
         include("*.jar")
