@@ -84,6 +84,7 @@ a minecraft mod that organizes items in chests using preset layouts. set up a pr
 #### +[my config](all_surv.json) for mod with all survival items
 ## what it does
 
+
 - configs with profiles. up to 50 configs, up to 128 profiles each
 - each profile holds a set of items with counts. essentially a chest layout
 - phantom items. even in an empty chest, you can see where and what should go
@@ -94,7 +95,7 @@ a minecraft mod that organizes items in chests using preset layouts. set up a pr
 - import and export via clipboard or json file, with a built-in file dialog
 - layout builder opens directly from the menu
 - hotkeys for transferring items and toggling the panel
-- slot locking. hold alt and click a chest or inventory slot - the slot gets locked with a purple outline and is skipped during transfers. click again to unlock
+- slot locking. hold alt and click inventory slot - the slot gets locked with a purple outline and is skipped during transfers. click again to unlock
 - interface in russian and english
 - fabric and neoforge
 
