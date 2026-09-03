@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 public final class ChestProfiles {
     public static final String MOD_ID = "chestprofile";
     public static final String MOD_NAME = "Chest Profile";
-    public static final String MOD_VERSION = "1.1a";
+    public static final String MOD_VERSION = "1.1b";
     private static final Logger LOG = LogUtils.getLogger();
 
     private ChestProfiles() {

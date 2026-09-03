@@ -1,6 +1,5 @@
 package dev.chestprofiles.client.gui;
 
-import dev.chestprofiles.client.FpsCap;
 import dev.chestprofiles.client.config.ProfileConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -22,7 +21,7 @@ import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-public class FilePickerScreen extends Screen {
+public class FilePickerScreen extends FpsCappedScreen {
 
     public enum Mode { LOAD, SAVE }
 
@@ -63,7 +62,6 @@ public class FilePickerScreen extends Screen {
 
     @Override
     protected void init() {
-        FpsCap.begin();
         refresh();
         int centerX = this.width / 2;
         int bottomButtonY = this.height - BOTTOM_BAR_HEIGHT;
@@ -157,12 +155,6 @@ public class FilePickerScreen extends Screen {
     @Override
     public void onClose() {
         Minecraft.getInstance().gui.setScreen(this.returnTo);
-    }
-
-    @Override
-    public void removed() {
-        FpsCap.end();
-        super.removed();
     }
 
     private int visibleRows() {
@@ -287,10 +279,5 @@ public class FilePickerScreen extends Screen {
             String labelClipped = font.plainSubstrByWidth(label, LIST_WIDTH - 12);
             graphics.text(font, labelClipped, listX + 4, rowY + 5, isDirectory ? 0xFFFFFFFF : 0xFFCCCCCC, false);
         }
-    }
-
-    @Override
-    public boolean isPauseScreen() {
-        return false;
     }
 }

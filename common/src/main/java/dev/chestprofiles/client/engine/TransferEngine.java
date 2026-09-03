@@ -1,6 +1,7 @@
 package dev.chestprofiles.client.engine;
 
 import com.mojang.logging.LogUtils;
+import dev.chestprofiles.client.SlotLock;
 import dev.chestprofiles.client.config.ProfileConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -187,7 +188,7 @@ public final class TransferEngine {
     }
 
     private Slot findLayoutSlot(AbstractContainerMenu menu, LocalPlayer player, ItemStack carried) {
-        ProfileConfig.Profile profile = ProfileConfig.activeProfileOf(ProfileConfig.instance.getActiveConfig());
+        ProfileConfig.Profile profile = ProfileConfig.instance.getActiveProfile();
         if (profile == null) {
             return null;
         }
@@ -251,8 +252,10 @@ public final class TransferEngine {
         if (item == null) {
             return null;
         }
+        Inventory inventory = player.getInventory();
         for (Slot slot : menu.slots) {
-            if (slot.container == player.getInventory() && slot.isActive()
+            if (slot.container == inventory && slot.isActive()
+                    && !SlotLock.isLockedSlot(slot, inventory)
                     && slot.hasItem() && slot.getItem().getItem() == item
                     && slot.mayPickup(player)) {
                 return slot;
@@ -262,8 +265,10 @@ public final class TransferEngine {
     }
 
     private Slot findPlayerPlacementSlot(AbstractContainerMenu menu, LocalPlayer player, ItemStack carried) {
+        Inventory inventory = player.getInventory();
         for (Slot slot : menu.slots) {
-            if (slot.container != player.getInventory() || !slot.isActive() || !slot.hasItem()
+            if (slot.container != inventory || !slot.isActive() || SlotLock.isLockedSlot(slot, inventory)
+                    || !slot.hasItem()
                     || !ItemStack.isSameItemSameComponents(slot.getItem(), carried)
                     || slot.getItem().getCount() >= slot.getItem().getMaxStackSize()
                     || slot.getItem().getCount() >= slot.getMaxStackSize()
@@ -273,7 +278,7 @@ public final class TransferEngine {
             return slot;
         }
         for (Slot slot : menu.slots) {
-            if (slot.container == player.getInventory() && slot.isActive()
+            if (slot.container == inventory && slot.isActive() && !SlotLock.isLockedSlot(slot, inventory)
                     && slot.getItem().isEmpty() && slot.mayPlace(carried)) {
                 return slot;
             }
@@ -284,7 +289,8 @@ public final class TransferEngine {
     private void returnCarried(AbstractContainerMenu menu, LocalPlayer player) {
         if (sourceSlotIndex != null) {
             for (Slot slot : menu.slots) {
-                if (slot.index == sourceSlotIndex && slot.isActive()) {
+                if (slot.index == sourceSlotIndex && slot.isActive()
+                        && !SlotLock.isLockedSlot(slot, player.getInventory())) {
                     click(menu, slot);
                     if (menu.getCarried().isEmpty()) {
                         return;

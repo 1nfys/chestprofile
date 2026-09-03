@@ -6,6 +6,7 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
@@ -105,8 +106,8 @@ public class ProfileConfig {
                 if (k == null || ref == null) {
                     continue;
                 }
-                String scope = k.contains("@") ? k.substring(0, k.indexOf('@')) : "sp:default";
-                String coordKey = k.contains("@") ? k.substring(k.indexOf('@') + 1) : k;
+                String scope = k.contains("@") ? splitChestKey(k)[0] : "sp:default";
+                String coordKey = splitChestKey(k)[1];
                 getScopeAssignments(scope).put(coordKey, ref);
                 saveScopeAssignments(scope);
             }
@@ -257,21 +258,20 @@ public class ProfileConfig {
             Minecraft mc = Minecraft.getInstance();
             if (mc.hasSingleplayerServer() && mc.getSingleplayerServer() != null) {
                 String worldName = mc.getSingleplayerServer().getWorldData().getLevelName();
-                if (worldName != null && !worldName.isBlank()) {
+                if (!worldName.isBlank()) {
                     return "sp:" + worldName.trim();
                 }
                 return "sp:singleplayer";
             }
-            if (mc.getCurrentServer() != null && mc.getCurrentServer().ip != null && !mc.getCurrentServer().ip.isBlank()) {
+            if (mc.getCurrentServer() != null && !mc.getCurrentServer().ip.isBlank()) {
                 return "mp:" + mc.getCurrentServer().ip.trim().toLowerCase(Locale.ROOT);
             }
             if (mc.getConnection() != null) {
-                if (mc.getConnection().getServerData() != null && mc.getConnection().getServerData().ip != null && !mc.getConnection().getServerData().ip.isBlank()) {
-                    return "mp:" + mc.getConnection().getServerData().ip.trim().toLowerCase(Locale.ROOT);
+                ClientPacketListener connection = mc.getConnection();
+                if (connection.getServerData() != null && !connection.getServerData().ip.isBlank()) {
+                    return "mp:" + connection.getServerData().ip.trim().toLowerCase(Locale.ROOT);
                 }
-                if (mc.getConnection().getConnection() != null && mc.getConnection().getConnection().getRemoteAddress() != null) {
-                    return "mp:" + mc.getConnection().getConnection().getRemoteAddress().toString().trim().toLowerCase(Locale.ROOT);
-                }
+                return "mp:" + connection.getConnection().getRemoteAddress().toString().trim().toLowerCase(Locale.ROOT);
             }
         } catch (Throwable ignored) {
         }
@@ -287,12 +287,19 @@ public class ProfileConfig {
         return worldScope + "@" + dimension + ":" + x + "," + y + "," + z;
     }
 
+    public static String[] splitChestKey(String key) {
+        if (key != null && key.contains("@")) {
+            return new String[] { key.substring(0, key.indexOf('@')), key.substring(key.indexOf('@') + 1) };
+        }
+        return new String[] { currentWorldScope(), key };
+    }
+
     public void applyChestAssignment(String key) {
         if (key == null) {
             return;
         }
-        String scope = key.contains("@") ? key.substring(0, key.indexOf('@')) : currentWorldScope();
-        String coordKey = key.contains("@") ? key.substring(key.indexOf('@') + 1) : key;
+        String scope = splitChestKey(key)[0];
+        String coordKey = splitChestKey(key)[1];
         Map<String, ChestRef> assignments = getScopeAssignments(scope);
         ChestRef assignment = assignments.get(coordKey);
         if (assignment == null) {
@@ -320,8 +327,8 @@ public class ProfileConfig {
             config.activeProfile = profileIndex;
         }
         if (key != null) {
-            String scope = key.contains("@") ? key.substring(0, key.indexOf('@')) : currentWorldScope();
-            String coordKey = key.contains("@") ? key.substring(key.indexOf('@') + 1) : key;
+            String scope = splitChestKey(key)[0];
+            String coordKey = splitChestKey(key)[1];
             Map<String, ChestRef> assignments = getScopeAssignments(scope);
             if (profileIndex >= 0) {
                 assignments.put(coordKey, new ChestRef(activeConfigIndex, profileIndex));
@@ -369,6 +376,10 @@ public class ProfileConfig {
             activeConfigIndex = 0;
         }
         return configs.get(activeConfigIndex);
+    }
+
+    public Profile getActiveProfile() {
+        return activeProfileOf(getActiveConfig());
     }
 
     public void cycleConfig(boolean forward) {

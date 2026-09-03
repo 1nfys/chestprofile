@@ -1,5 +1,6 @@
 package dev.chestprofiles.mixin;
 
+import dev.chestprofiles.client.SlotLock;
 import dev.chestprofiles.client.KeybindManager;
 import dev.chestprofiles.client.config.ProfileConfig;
 import dev.chestprofiles.client.engine.TransferEngine;
@@ -15,12 +16,14 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -43,6 +46,10 @@ public abstract class AbstractContainerScreenMixin extends Screen {
 
     @Shadow
     protected int imageHeight;
+
+    @Shadow
+    @Final
+    protected net.minecraft.world.inventory.AbstractContainerMenu menu;
 
     @Unique
     private ProfilePanel chestprofile$panel;
@@ -103,10 +110,18 @@ public abstract class AbstractContainerScreenMixin extends Screen {
         panel.renderFillButton(graphics, mouseX, mouseY);
         panel.renderChestPhantoms(graphics);
         panel.renderOverlay(graphics, mouseX, mouseY);
+        if (this.menu instanceof ChestMenu && SlotLock.isAltDown()) {
+            SlotLock.render(graphics, this.leftPos, this.topPos, this.menu);
+        }
     }
 
-    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
+        @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void chestprofile$mouseClicked(MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> callbackInfoReturnable) {
+        if (event.hasAltDown() && event.button() == 0
+                && SlotLock.clickToggle((AbstractContainerScreen<?>) (Object) this, this.leftPos, this.topPos, event.x(), event.y())) {
+            callbackInfoReturnable.setReturnValue(true);
+            return;
+        }
         ProfilePanel panel = chestprofile$panel();
         if (panel.fillButtonClicked(event.x(), event.y(), event.button())
                 || panel.mouseClicked(event.x(), event.y(), event.button())) {

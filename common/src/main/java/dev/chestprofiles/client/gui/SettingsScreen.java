@@ -1,13 +1,11 @@
 package dev.chestprofiles.client.gui;
 
-import dev.chestprofiles.client.FpsCap;
 import dev.chestprofiles.client.config.ProfileConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Util;
@@ -15,7 +13,7 @@ import net.minecraft.util.Util;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
-public class SettingsScreen extends Screen {
+public class SettingsScreen extends FpsCappedScreen {
 
     private static final String LAYOUT_BUILDER_URL = "https://mis-builder.cubicmetre.net/";
 
@@ -44,13 +42,12 @@ public class SettingsScreen extends Screen {
 
     @Override
     protected void init() {
-        FpsCap.begin();
         ProfileConfig profileConfig = ProfileConfig.instance;
         int rowY = ROW_START_Y;
         this.pickerY = rowY;
 
         ProfileConfig.Config activeConfig = profileConfig.getActiveConfig();
-        selectedProfile = activeConfig != null && !activeConfig.profiles.isEmpty() ? Math.max(0, activeConfig.activeProfile) : -1;
+        selectedProfile = computeSelectedProfile(activeConfig);
 
         int panelLeft = this.width / 2 - HALF_PANEL_WIDTH;
         int rightColumnLeft = panelLeft + BUTTON_WIDTH_DOUBLE + BUTTON_GAP;
@@ -202,8 +199,12 @@ public class SettingsScreen extends Screen {
 
     private void refreshProfilePicker() {
         ProfileConfig.Config currentConfig = ProfileConfig.instance.getActiveConfig();
-        selectedProfile = currentConfig != null && !currentConfig.profiles.isEmpty() ? Math.max(0, currentConfig.activeProfile) : -1;
+        selectedProfile = computeSelectedProfile(currentConfig);
         profileNameBox.setValue(profileName());
+    }
+
+    private static int computeSelectedProfile(ProfileConfig.Config config) {
+        return config != null && !config.profiles.isEmpty() ? Math.max(0, config.activeProfile) : -1;
     }
 
     private void setStatus(Component message, boolean isError) {
@@ -244,16 +245,5 @@ public class SettingsScreen extends Screen {
     @Override
     public void onClose() {
         Minecraft.getInstance().gui.setScreen(this.parent);
-    }
-
-    @Override
-    public void removed() {
-        FpsCap.end();
-        super.removed();
-    }
-
-    @Override
-    public boolean isPauseScreen() {
-        return false;
     }
 }

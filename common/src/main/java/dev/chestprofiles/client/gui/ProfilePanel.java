@@ -1,5 +1,6 @@
 package dev.chestprofiles.client.gui;
 
+import dev.chestprofiles.client.DrawUtil;
 import dev.chestprofiles.client.config.ProfileConfig;
 import dev.chestprofiles.client.engine.TransferEngine;
 import net.minecraft.client.Minecraft;
@@ -152,11 +153,10 @@ public final class ProfilePanel {
 
     public boolean contains(int mouseX, int mouseY) {
         float scale = panelScale();
-        float scaledWidth = imageWidth * scale;
-        float scaledHeight = PANEL_H * scale;
         int scaledX = scaledX0();
         int scaledY = scaledY0();
-        return mouseX >= scaledX && mouseX < scaledX + scaledWidth && mouseY >= scaledY && mouseY < scaledY + scaledHeight;
+        return DrawUtil.contains(mouseX, mouseY, scaledX, scaledY,
+                (int) (scaledX + imageWidth * scale), (int) (scaledY + PANEL_H * scale));
     }
 
     private int gridY0() {
@@ -229,31 +229,27 @@ public final class ProfilePanel {
         return index >= 0 && index < listedProfiles().size() ? index : -1;
     }
 
+    private boolean overButton(int localX, int localY, int bx, int by) {
+        return DrawUtil.contains(localX, localY, bx, by, bx + ARROW_W, by + ARROW_W);
+    }
+
     private boolean overPrev(int localX, int localY) {
-        int buttonX = x0() + PREV_X_OFFSET;
-        int buttonY = y0() + PREV_DY;
-        return localX >= buttonX && localX < buttonX + ARROW_W && localY >= buttonY && localY < buttonY + ARROW_W;
+        return overButton(localX, localY, x0() + PREV_X_OFFSET, y0() + PREV_DY);
     }
 
     private boolean overNext(int localX, int localY) {
-        int buttonX = x1() - NEXT_X_OFFSET;
-        int buttonY = y0() + NEXT_DY;
-        return localX >= buttonX && localX < buttonX + ARROW_W && localY >= buttonY && localY < buttonY + ARROW_W;
+        return overButton(localX, localY, x1() - NEXT_X_OFFSET, y0() + NEXT_DY);
     }
 
     private boolean overGear(int localX, int localY) {
-        int buttonX = x1() - GEAR_X_OFFSET;
-        int buttonY = y0() + GEAR_DY;
-        return localX >= buttonX && localX < buttonX + ARROW_W && localY >= buttonY && localY < buttonY + ARROW_W;
+        return overButton(localX, localY, x1() - GEAR_X_OFFSET, y0() + GEAR_DY);
     }
 
     private boolean overHiddenGear(int mouseX, int mouseY) {
         if (ProfileConfig.instance.panelEnabled || !TransferEngine.canOperate(screen)) {
             return false;
         }
-        int buttonX = x1() - GEAR_X_OFFSET;
-        int buttonY = y0() + GEAR_DY;
-        return mouseX >= buttonX && mouseX < buttonX + ARROW_W && mouseY >= buttonY && mouseY < buttonY + ARROW_W;
+        return overButton(mouseX, mouseY, x1() - GEAR_X_OFFSET, y0() + GEAR_DY);
     }
 
     public int fillX0() {
@@ -305,7 +301,7 @@ public final class ProfilePanel {
     }
 
     private boolean overFillButton(int mouseX, int mouseY) {
-        return mouseX >= fillX0() && mouseX < fillX1() && mouseY >= fillY0() && mouseY < fillY1();
+        return DrawUtil.contains(mouseX, mouseY, fillX0(), fillY0(), fillX1(), fillY1());
     }
 
     private boolean overScrollbar(int localX, int localY) {
@@ -315,6 +311,10 @@ public final class ProfilePanel {
 
     private static Item itemFor(ProfileConfig.ItemEntry entry) {
         return entry == null ? null : ProfileConfig.itemFromId(entry.item);
+    }
+
+    private void openSettings() {
+        Minecraft.getInstance().gui.setScreen(new SettingsScreen(screen));
     }
 
     public void renderBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -381,7 +381,7 @@ public final class ProfilePanel {
         if (!TransferEngine.canOperate(screen)) {
             return false;
         }
-        return ProfileConfig.activeProfileOf(ProfileConfig.instance.getActiveConfig()) != null;
+        return ProfileConfig.instance.getActiveProfile() != null;
     }
 
     private void renderHeader(GuiGraphicsExtractor graphics, int localMouseX, int localMouseY) {
@@ -439,15 +439,9 @@ public final class ProfilePanel {
             graphics.fill(rowLeft, rowTop, rowRight, fillBottom, isSelected ? ROW_SELECTED_FILL : ROW_COLOR);
             int outlineBottom = Math.min(rowTop + ROW_H - OUTLINE_BOTTOM_TRIM, gridY1());
             if (isSelected) {
-                graphics.horizontalLine(rowLeft - 1, rowRight + 1, rowTop - 1, ROW_SELECTED_BORDER);
-                graphics.horizontalLine(rowLeft - 1, rowRight + 1, outlineBottom, ROW_SELECTED_BORDER);
-                graphics.verticalLine(rowLeft - 1, rowTop - 1, outlineBottom, ROW_SELECTED_BORDER);
-                graphics.verticalLine(rowRight + 1, rowTop - 1, outlineBottom, ROW_SELECTED_BORDER);
+                DrawUtil.drawRectBorder(graphics, rowLeft - 1, rowTop - 1, rowRight + 1, outlineBottom, ROW_SELECTED_BORDER);
             } else if (index == hoveredRowIndex) {
-                graphics.horizontalLine(rowLeft - 1, rowRight + 1, rowTop - 1, HOVER_BORDER);
-                graphics.horizontalLine(rowLeft - 1, rowRight + 1, outlineBottom, HOVER_BORDER);
-                graphics.verticalLine(rowLeft - 1, rowTop - 1, outlineBottom, HOVER_BORDER);
-                graphics.verticalLine(rowRight + 1, rowTop - 1, outlineBottom, HOVER_BORDER);
+                DrawUtil.drawRectBorder(graphics, rowLeft - 1, rowTop - 1, rowRight + 1, outlineBottom, HOVER_BORDER);
             } else if (rowTop + ROW_H <= gridY1()) {
                 graphics.horizontalLine(rowLeft, rowRight, rowTop + ROW_H - 1, LINE_COLOR);
             }
@@ -586,10 +580,7 @@ public final class ProfilePanel {
     }
 
     private void drawPhantomBorder(GuiGraphicsExtractor graphics, int x, int y) {
-        graphics.horizontalLine(x - 1, x + 17, y - 1, PHANTOM_MATCH);
-        graphics.horizontalLine(x - 1, x + 17, y + 17, PHANTOM_MATCH);
-        graphics.verticalLine(x - 1, y - 1, y + 17, PHANTOM_MATCH);
-        graphics.verticalLine(x + 17, y - 1, y + 17, PHANTOM_MATCH);
+        DrawUtil.drawRectBorder(graphics, x - 1, y - 1, x + 16, y + 16, PHANTOM_MATCH);
     }
 
     private void renderTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int localMouseX, int localMouseY) {
@@ -679,7 +670,7 @@ public final class ProfilePanel {
         int localMouseX = toLocalX(mouseX);
         int localMouseY = toLocalY(mouseY);
         if (button == 0 && overHiddenGear((int) mouseX, (int) mouseY)) {
-            Minecraft.getInstance().gui.setScreen(new SettingsScreen(screen));
+            openSettings();
             return true;
         }
         if (!isVisible()) {
@@ -715,7 +706,7 @@ public final class ProfilePanel {
                 return true;
             }
             if (overGear(localMouseX, localMouseY)) {
-                Minecraft.getInstance().gui.setScreen(new SettingsScreen(screen));
+                openSettings();
                 return true;
             }
         }
